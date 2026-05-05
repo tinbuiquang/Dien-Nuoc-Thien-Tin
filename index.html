@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cửa Hàng Điện Nước Thiện Tín</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .page-btn.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .page-btn { transition: all 0.2s; border: 1px solid #e5e7eb; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; }
+        .page-btn:hover:not(.active) { background-color: #f3f4f6; }
+        .tab-btn { transition: all 0.2s; padding: 0.75rem 1.5rem; border-bottom: 3px solid transparent; font-weight: 600; cursor: pointer; color: #6b7280; }
+        .tab-btn.active { border-bottom-color: #4f46e5; color: #4f46e5; }
+        .tab-btn:hover:not(.active) { color: #374151; }
+        #invoiceProductSearch { position: relative; }
+        .dropdown-results { position: absolute; z-index: 100; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; max-height: 220px; overflow-y: auto; width: 100%; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        .dropdown-item { padding: 0.5rem 1rem; cursor: pointer; font-size: 0.875rem; }
+        .dropdown-item:hover { background: #eef2ff; color: #4f46e5; }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-10">
+
+<div class="max-w-6xl mx-auto p-4 md:p-6">
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white p-6 rounded-t-2xl shadow-lg text-center">
+        <h1 class="text-2xl font-bold uppercase tracking-wide">Cửa Hàng Điện Nước Thiện Tín</h1>
+        <p class="text-indigo-100 mt-1 text-sm">Quản lý vật tư · Khách hàng · Hoá đơn bán hàng</p>
+    </header>
+
+    <!-- Tabs -->
+    <div class="bg-white border-b border-gray-200 flex no-print">
+        <button class="tab-btn active" onclick="switchTab('tab-products')" id="btn-tab-products"><i class="fas fa-boxes mr-1"></i> Vật Tư</button>
+        <button class="tab-btn" onclick="switchTab('tab-customers')" id="btn-tab-customers"><i class="fas fa-users mr-1"></i> Khách Hàng</button>
+        <button class="tab-btn" onclick="switchTab('tab-invoice')" id="btn-tab-invoice"><i class="fas fa-file-invoice mr-1"></i> Tạo Hoá Đơn</button>
+        <button class="tab-btn" onclick="switchTab('tab-invoicelist')" id="btn-tab-invoicelist"><i class="fas fa-list-alt mr-1"></i> Danh Sách Hoá Đơn</button>
+    </div>
+
+    <!-- ===== TAB: VẬT TƯ ===== -->
+    <div id="tab-products">
+        <div class="bg-white p-6 shadow-md border-b border-gray-200">
+            <h2 class="text-lg font-semibold mb-4 text-gray-700 flex items-center">
+                <i class="fas fa-plus-circle mr-2 text-indigo-600"></i> Nhập Sản Phẩm Mới
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Tên Sản Phẩm</label>
+                    <input type="text" id="inputName" placeholder="Tên hàng..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Số Lượng</label>
+                    <input type="number" id="inputQty" value="1" min="1" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Đơn Giá (VNĐ)</label>
+                    <input type="number" id="inputPrice" placeholder="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="flex items-end gap-2">
+                    <div class="flex-grow">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Thành Tiền</label>
+                        <input type="text" id="totalDisplay" readonly value="0" class="w-full px-3 py-2 bg-gray-100 border rounded-lg font-bold text-indigo-600">
+                    </div>
+                    <button id="btnAdd" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors h-[42px] flex items-center justify-center min-w-[42px]" title="Lưu sản phẩm">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 border-b border-gray-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full md:w-96">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fas fa-search"></i></span>
+                <input type="text" id="searchInput" oninput="filterAndRender()" placeholder="Tìm kiếm vật tư..."
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-sm text-gray-500 italic">Hiển thị: <span id="countDisplay" class="font-bold text-indigo-600">0</span> sản phẩm</div>
+                <button onclick="clearAllData()" class="text-xs text-red-500 hover:underline">Xóa tất cả</button>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-xl overflow-hidden min-h-[400px]">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left" id="mainTable">
+                    <thead class="bg-gray-100 border-b border-gray-200 uppercase text-xs font-semibold text-gray-600">
+                        <tr>
+                            <th class="px-6 py-4 w-12 text-center">STT</th>
+                            <th class="px-6 py-4">Tên Hàng</th>
+                            <th class="px-6 py-4 text-center w-20">SL</th>
+                            <th class="px-6 py-4 text-right">Đơn Giá</th>
+                            <th class="px-6 py-4 text-right">Thành Tiền</th>
+                            <th class="px-6 py-4 text-center w-24">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+            <div id="noResult" class="hidden p-10 text-center text-gray-500">
+                <i class="fas fa-box-open text-4xl mb-3 block"></i> Không tìm thấy dữ liệu phù hợp.
+            </div>
+        </div>
+
+        <div class="bg-white p-4 border-t border-gray-200 flex flex-wrap items-center justify-center gap-2" id="pagination"></div>
+
+        <div class="bg-white p-6 rounded-b-2xl shadow-lg border-t border-gray-100 flex flex-wrap gap-3 justify-center md:justify-end">
+            <input type="file" id="importCSV" accept=".csv" class="hidden" onchange="handleImportCSV(this)">
+            <button onclick="document.getElementById('importCSV').click()" class="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl transition-all shadow-md">
+                <i class="fas fa-file-import"></i> Nhập CSV
+            </button>
+            <button onclick="exportCSV()" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-md">
+                <i class="fas fa-file-export"></i> Xuất CSV
+            </button>
+            <button onclick="exportProductPDF()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-md">
+                <i class="fas fa-file-pdf"></i> Xuất PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== TAB: KHÁCH HÀNG ===== -->
+    <div id="tab-customers" class="hidden">
+        <div class="bg-white p-6 shadow-md border-b border-gray-200">
+            <h2 class="text-lg font-semibold mb-4 text-gray-700 flex items-center">
+                <i class="fas fa-user-plus mr-2 text-green-600"></i> Thêm Khách Hàng Mới
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Tên Khách Hàng</label>
+                    <input type="text" id="custName" placeholder="Nguyễn Văn A..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Số Điện Thoại</label>
+                    <input type="text" id="custPhone" placeholder="0909..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Địa Chỉ</label>
+                    <input type="text" id="custAddress" placeholder="Số nhà, đường..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+                </div>
+                <div class="flex items-end">
+                    <button id="btnAddCust" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors h-[42px] flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i> Thêm Khách
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 border-b border-gray-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full md:w-96">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fas fa-search"></i></span>
+                <input type="text" id="searchCust" oninput="filterCustomers()" placeholder="Tìm khách hàng..."
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
+            </div>
+            <div class="text-sm text-gray-500 italic">Tổng: <span id="custCount" class="font-bold text-green-600">0</span> khách hàng</div>
+        </div>
+
+        <div class="bg-white shadow-xl overflow-hidden min-h-[300px]">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-100 border-b border-gray-200 uppercase text-xs font-semibold text-gray-600">
+                        <tr>
+                            <th class="px-6 py-4 w-12 text-center">STT</th>
+                            <th class="px-6 py-4">Tên Khách Hàng</th>
+                            <th class="px-6 py-4">Số Điện Thoại</th>
+                            <th class="px-6 py-4">Địa Chỉ</th>
+                            <th class="px-6 py-4 text-center w-32">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+            <div id="noCustResult" class="hidden p-10 text-center text-gray-500">
+                <i class="fas fa-users text-4xl mb-3 block"></i> Chưa có khách hàng nào.
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-b-2xl shadow-lg border-t border-gray-100 flex flex-wrap gap-3 justify-center md:justify-end">
+            <input type="file" id="importCustCSV" accept=".csv" class="hidden" onchange="handleImportCustCSV(this)">
+            <button onclick="document.getElementById('importCustCSV').click()" class="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl transition-all shadow-md">
+                <i class="fas fa-file-import"></i> Nhập CSV
+            </button>
+            <button onclick="exportCustCSV()" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-md">
+                <i class="fas fa-file-export"></i> Xuất CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== TAB: TẠO HOÁ ĐƠN ===== -->
+    <div id="tab-invoice" class="hidden">
+        <div class="bg-white p-6 shadow-md border-b border-gray-200">
+            <h2 class="text-lg font-semibold mb-4 text-gray-700 flex items-center">
+                <i class="fas fa-file-invoice-dollar mr-2 text-indigo-600"></i> Thông Tin Hoá Đơn
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Khách Hàng</label>
+                    <div class="relative">
+                        <input type="text" id="invCustSearch" placeholder="Nhập tên hoặc SĐT khách..." autocomplete="off"
+                               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                               oninput="searchCustomerForInvoice()">
+                        <div id="custDropdown" class="dropdown-results hidden"></div>
+                    </div>
+                    <div id="selectedCustInfo" class="mt-2 hidden text-xs text-gray-600 bg-indigo-50 p-2 rounded-lg">
+                        <span id="selCustName" class="font-bold text-indigo-700"></span><br>
+                        <span id="selCustPhone"></span> · <span id="selCustAddr"></span>
+                        <button onclick="clearSelectedCust()" class="ml-2 text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Ngày Lập</label>
+                    <input type="date" id="invDate" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Ghi Chú</label>
+                    <input type="text" id="invNote" placeholder="Ghi chú (nếu có)..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <hr class="my-4 border-gray-200">
+
+            <h3 class="text-sm font-bold text-gray-600 mb-3 uppercase">Thêm Sản Phẩm Vào Hoá Đơn</h3>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div class="md:col-span-2 relative">
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Tên Sản Phẩm</label>
+                    <input type="text" id="invProductSearch" placeholder="Tìm sản phẩm..." autocomplete="off"
+                           class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                           oninput="searchProductForInvoice()">
+                    <div id="productDropdown" class="dropdown-results hidden"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Số Lượng</label>
+                    <input type="number" id="invQty" value="1" min="1" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Đơn Giá</label>
+                    <input type="number" id="invPrice" placeholder="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="addItemToInvoice()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg h-[42px] flex items-center justify-center gap-2 transition-colors">
+                        <i class="fas fa-plus"></i> Thêm
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoice Items Table -->
+        <div class="bg-white shadow-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-100 border-b border-gray-200 uppercase text-xs font-semibold text-gray-600">
+                        <tr>
+                            <th class="px-6 py-4 w-12 text-center">STT</th>
+                            <th class="px-6 py-4">Tên Hàng</th>
+                            <th class="px-6 py-4 text-center w-20">SL</th>
+                            <th class="px-6 py-4 text-right">Đơn Giá</th>
+                            <th class="px-6 py-4 text-right">Thành Tiền</th>
+                            <th class="px-6 py-4 text-center w-28 no-print">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceItemsTable" class="divide-y divide-gray-100"></tbody>
+                    <tfoot>
+                        <tr class="bg-indigo-50">
+                            <td colspan="4" class="px-6 py-4 text-right font-bold text-gray-700 uppercase text-sm">Tổng Cộng</td>
+                            <td class="px-6 py-4 text-right font-bold text-indigo-700 text-lg" id="invoiceTotal">0 đ</td>
+                            <td class="no-print"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div id="noInvoiceItems" class="p-10 text-center text-gray-400">
+                <i class="fas fa-cart-plus text-4xl mb-3 block"></i> Chưa có sản phẩm nào. Hãy thêm sản phẩm phía trên.
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-b-2xl shadow-lg border-t border-gray-100 flex flex-wrap gap-3 justify-end">
+            <button onclick="clearInvoice()" class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl transition-all">
+                <i class="fas fa-trash"></i> Xoá Hoá Đơn
+            </button>
+            <button onclick="saveInvoice()" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-md">
+                <i class="fas fa-save"></i> Lưu Hoá Đơn
+            </button>
+            <button onclick="exportInvoicePDF()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-md">
+                <i class="fas fa-file-pdf"></i> Xuất PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== TAB: DANH SÁCH HOÁ ĐƠN ===== -->
+    <div id="tab-invoicelist" class="hidden">
+        <div class="bg-gray-50 p-4 border-b border-gray-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full md:w-96">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fas fa-search"></i></span>
+                <input type="text" id="searchInvoice" oninput="renderInvoiceList()" placeholder="Tìm theo tên khách, ngày..."
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            </div>
+            <div class="text-sm text-gray-500 italic">Tổng: <span id="invoiceCount" class="font-bold text-indigo-600">0</span> hoá đơn</div>
+        </div>
+
+        <div class="bg-white shadow-xl overflow-hidden min-h-[300px]">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-100 border-b border-gray-200 uppercase text-xs font-semibold text-gray-600">
+                        <tr>
+                            <th class="px-6 py-4 w-16 text-center">Số HĐ</th>
+                            <th class="px-6 py-4">Khách Hàng</th>
+                            <th class="px-6 py-4">SĐT</th>
+                            <th class="px-6 py-4">Ngày</th>
+                            <th class="px-6 py-4 text-right">Tổng Tiền</th>
+                            <th class="px-6 py-4 text-center w-32">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceListTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+            <div id="noInvoiceList" class="hidden p-10 text-center text-gray-400">
+                <i class="fas fa-file-invoice text-4xl mb-3 block"></i> Chưa có hoá đơn nào được lưu.
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-b-2xl shadow-lg border-t border-gray-100 flex flex-wrap gap-3 justify-center md:justify-end">
+            <input type="file" id="importInvJSON" accept=".json" class="hidden" onchange="handleImportInvJSON(this)">
+            <input type="file" id="importInvCSV" accept=".csv" class="hidden" onchange="handleImportInvCSV(this)">
+            <button onclick="document.getElementById('importInvJSON').click()" class="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl transition-all shadow-md" title="Nhập backup JSON (đầy đủ sản phẩm)">
+                <i class="fas fa-file-import"></i> Nhập JSON
+            </button>
+            <button onclick="exportInvJSON()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-md" title="Xuất backup JSON (đầy đủ sản phẩm)">
+                <i class="fas fa-file-code"></i> Xuất JSON
+            </button>
+            <button onclick="exportInvCSV()" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-md" title="Xuất CSV (xem tổng quan)">
+                <i class="fas fa-file-export"></i> Xuất CSV
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Sửa Dòng Hoá Đơn -->
+<div id="editInvoiceItemModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 px-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <h3 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2"><i class="fas fa-pencil-alt text-indigo-500"></i> Sửa Sản Phẩm</h3>
+        <input type="hidden" id="editInvItemIndex">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Tên Sản Phẩm</label>
+                <input type="text" id="editInvItemName" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Số Lượng</label>
+                    <input type="number" id="editInvItemQty" min="1" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Đơn Giá (VNĐ)</label>
+                    <input type="number" id="editInvItemPrice" min="0" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Thành Tiền</label>
+                <input type="text" id="editInvItemTotal" readonly class="w-full px-3 py-2 bg-gray-100 border rounded-lg font-bold text-indigo-600">
+            </div>
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button onclick="closeEditInvoiceItemModal()" class="flex-grow py-2.5 border rounded-xl hover:bg-gray-50 font-medium transition-colors">Hủy</button>
+            <button onclick="saveEditInvoiceItem()" class="flex-grow py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold transition-all">Cập Nhật</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Sửa Vật Tư -->
+<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 px-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">Chỉnh sửa sản phẩm</h3>
+        <div class="space-y-4">
+            <input type="hidden" id="editIndex">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Tên Sản Phẩm</label>
+                <input type="text" id="editName" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Số Lượng</label>
+                    <input type="number" id="editQty" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Đơn Giá</label>
+                    <input type="number" id="editPrice" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button onclick="closeEditModal()" class="flex-grow py-2.5 border rounded-xl hover:bg-gray-50 font-medium transition-colors">Hủy</button>
+            <button onclick="saveEdit()" class="flex-grow py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold transition-all">Cập Nhật</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Sửa Hoá Đơn -->
+<div id="editInvoiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 px-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2"><i class="fas fa-file-invoice text-yellow-500"></i> Sửa Hoá Đơn</h3>
+        <input type="hidden" id="editInvIndex">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Khách Hàng</label>
+                <input type="text" id="editInvCustName" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400" placeholder="Tên khách hàng">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Số Điện Thoại</label>
+                <input type="text" id="editInvCustPhone" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400" placeholder="SĐT">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Ngày Lập</label>
+                <input type="date" id="editInvDate" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Địa Chỉ</label>
+                <input type="text" id="editInvCustAddr" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400" placeholder="Địa chỉ">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Ghi Chú</label>
+                <input type="text" id="editInvNote" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400" placeholder="Ghi chú">
+            </div>
+        </div>
+        <hr class="my-3 border-gray-200">
+        <h4 class="text-sm font-bold text-gray-600 mb-2 uppercase flex items-center gap-2"><i class="fas fa-list text-yellow-500"></i> Danh Sách Sản Phẩm</h4>
+        <div class="overflow-x-auto mb-3">
+            <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                <thead class="bg-gray-100 text-gray-600 uppercase text-xs font-semibold">
+                    <tr>
+                        <th class="px-3 py-2 text-left">Tên Hàng</th>
+                        <th class="px-3 py-2 text-center w-16">SL</th>
+                        <th class="px-3 py-2 text-right w-28">Đơn Giá</th>
+                        <th class="px-3 py-2 text-right w-28">Thành Tiền</th>
+                        <th class="px-3 py-2 text-center w-16"></th>
+                    </tr>
+                </thead>
+                <tbody id="editInvItemsBody" class="divide-y divide-gray-100"></tbody>
+            </table>
+        </div>
+        <!-- Thêm dòng sản phẩm mới -->
+        <div class="bg-gray-50 rounded-xl p-3 mb-4">
+            <p class="text-xs font-bold text-gray-500 uppercase mb-2">Thêm Sản Phẩm</p>
+            <div class="grid grid-cols-4 gap-2">
+                <div class="col-span-2">
+                    <input type="text" id="editInvNewName" placeholder="Tên sản phẩm..." class="w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+                </div>
+                <div>
+                    <input type="number" id="editInvNewQty" value="1" min="1" placeholder="SL" class="w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+                </div>
+                <div>
+                    <input type="number" id="editInvNewPrice" placeholder="Đơn giá" class="w-full px-3 py-2 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-yellow-400">
+                </div>
+            </div>
+            <button onclick="addItemToEditInvoice()" class="mt-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1">
+                <i class="fas fa-plus"></i> Thêm Dòng
+            </button>
+        </div>
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-sm text-gray-500">Tổng cộng:</span>
+            <span id="editInvTotal" class="text-lg font-bold text-indigo-700"></span>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closeEditInvoiceModal()" class="flex-grow py-2.5 border rounded-xl hover:bg-gray-50 font-medium transition-colors">Hủy</button>
+            <button onclick="saveEditInvoice()" class="flex-grow py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl font-bold transition-all">Lưu Thay Đổi</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="editCustModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 px-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">Chỉnh sửa khách hàng</h3>
+        <div class="space-y-4">
+            <input type="hidden" id="editCustIndex">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Tên Khách Hàng</label>
+                <input type="text" id="editCustName" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Số Điện Thoại</label>
+                <input type="text" id="editCustPhone" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Địa Chỉ</label>
+                <input type="text" id="editCustAddress" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+        </div>
+        <div class="mt-6 flex gap-3">
+            <button onclick="closeEditCustModal()" class="flex-grow py-2.5 border rounded-xl hover:bg-gray-50 font-medium">Hủy</button>
+            <button onclick="saveEditCust()" class="flex-grow py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-bold">Cập Nhật</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xem Hoá Đơn -->
+<div id="viewInvoiceModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 px-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto relative">
+        <button onclick="closeViewInvoice()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 transition-all no-print" title="Đóng"><i class="fas fa-times"></i></button>
+        <div id="invoicePreview"></div>
+        <div class="mt-6 flex gap-3 no-print">
+            <button onclick="printInvoicePreview()" class="flex-grow py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold"><i class="fas fa-print mr-1"></i> In Hoá Đơn</button>
+            <button onclick="exportPreviewInvoicePDF()" class="flex-grow py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 font-bold"><i class="fas fa-file-pdf mr-1"></i> Xuất PDF</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ======= STORAGE KEYS =======
+    const STORAGE_KEY = 'VAT_TU_DATA_FULL_V3';
+    const CUST_KEY = 'KHACH_HANG_DATA_V1';
+    const INVOICE_KEY = 'HOA_DON_DATA_V1';
+
+    // ======= INITIAL PRODUCT DATA =======
+    const initialData = [
+        { name: "tê cong 90 BM", qty: 1, price: 58000 },
+        { name: "Y 34 Siêu Thành", qty: 1, price: 9000 },
+        { name: "Xe Rùa kẽm", qty: 1, price: 520000 },
+        { name: "ST - TÊ 42", qty: 1, price: 9000 },
+        { name: "NỐI GIẢM 60/42 BÌNH MINH DÀY", qty: 1, price: 17000 },
+        { name: "NỐI GIẢM 34/21 BÌNH MINH DÀY", qty: 1, price: 7000 },
+        { name: "Nối giảm 90/34 bình minh", qty: 1, price: 16000 },
+        { name: "Nối 60 RN 60 BM", qty: 1, price: 17000 },
+        { name: "Nối 60 Bình Minh M", qty: 1, price: 10000 },
+        { name: "Nối 42 Bình Minh", qty: 1, price: 9000 },
+        { name: "Dây Điện VCmo 2x2.5", qty: 1, price: 2430000 },
+        { name: "Dây Điện VCmo 2x1.5", qty: 1, price: 1515000 },
+        { name: "Dây Điện VCmo 2x1", qty: 1, price: 1100000 },
+        { name: "Dây Điện C.v 3.5", qty: 1, price: 1575000 },
+        { name: "Dây Điện CV2.5", qty: 1, price: 1175000 },
+        { name: "Dây điện CV 1.5", qty: 1, price: 725000 },
+        { name: "Aptomat G63-3MT C63 (M)", qty: 1, price: 170000 },
+        { name: "Dây đôi mềm dẹt VCmd 2x1.5 vàng 0,6/1", qty: 1, price: 14500000 },
+        { name: "Dây đôi mềm dẹt VCmd 2x1.0 vàng", qty: 1, price: 10500000 },
+        { name: "Khớp nối sống 27", qty: 1, price: 19000 },
+        { name: "Khớp nối sống 34", qty: 1, price: 25000 },
+        { name: "Co 20 rt 25 ppr bình minh", qty: 1, price: 43000 },
+        { name: "PPR CO 20 BÌNH MINH", qty: 1, price: 6000 },
+        { name: "PPR CO 20 REN NGOÀI 20 BÌNH MINH", qty: 1, price: 48000 },
+        { name: "PPR CO 20 REN TRONG 20 BÌNH MINH", qty: 1, price: 36000 },
+        { name: "PPR CO 25 BÌNH MINH", qty: 1, price: 8000 },
+        { name: "PPR CO 25 GIẢM 20 BÌNH MINH", qty: 1, price: 8000 },
+        { name: "PPR CO 25 REN NGOÀI 20 BÌNH MINH", qty: 1, price: 55000 },
+        { name: "PPR CO 25 REN TRONG 20 BÌNH MINH", qty: 1, price: 40000 },
+        { name: "PPR LƠI 20 BÌNH MINH", qty: 1, price: 6000 },
+        { name: "PPR LƠI 25 BÌNH MINH", qty: 1, price: 8000 },
+        { name: "PPR NỐI 20 BÌNH MINH", qty: 1, price: 5000 },
+        { name: "PPR NỐI 20 REN NGOÀI 20 BÌNH MINH", qty: 1, price: 38000 },
+        { name: "PPR NỐI 20 REN NGOÀI 25 BÌNH MINH", qty: 1, price: 42000 },
+        { name: "PPR NỐI 20 REN TRONG 20 BÌNH MINH", qty: 1, price: 34000 },
+        { name: "PPR NỐI 25 BÌNH MINH", qty: 1, price: 6000 },
+        { name: "PPR NỐI 25 GIẢM 20 BÌNH MINH", qty: 1, price: 6000 },
+        { name: "PPR TÊ 20 BÌNH MINH", qty: 1, price: 7000 },
+        { name: "PPR TÊ 20 REN NGOÀI 20 BÌNH MINH", qty: 1, price: 45000 },
+        { name: "PPR TÊ 20 REN TRONG 20 BÌNH MINH", qty: 1, price: 38000 },
+        { name: "PPR TÊ 25 REN TRONG 25 BÌNH MINH", qty: 1, price: 55000 },
+        { name: "PPR Van Xoay 20 BM", qty: 1, price: 160000 },
+        { name: "PPR Van Xoay 25 BM", qty: 1, price: 185000 },
+        { name: "Tê 25 ppr binh minh", qty: 1, price: 8000 },
+        { name: "KEO DÁN 200gr BÌNH MINH", qty: 1, price: 47000 },
+        { name: "KEO DÁN 25gr BÌNH MINH", qty: 1, price: 8000 },
+        { name: "KEO DÁN 500gr BÌNH MINH", qty: 1, price: 82000 },
+        { name: "KEO DÁN 50gr BÌNH MINH", qty: 1, price: 12000 },
+        { name: "ỐNG Tân Hưng 21", qty: 1, price: 21000 },
+        { name: "Ống Tân Hưng 27 3.0", qty: 1, price: 25000 },
+        { name: "ỐNG Tân Hưng 49 dày 2.4", qty: 1, price: 40000 },
+        { name: "ống Tiền Phong 27", qty: 1, price: 46000 },
+        { name: "Ống tiền phong 60", qty: 1, price: 130000 },
+        { name: "PPR ỐNG BÌNH MINH 20 x 3.4", qty: 1, price: 72000 },
+        { name: "PPR ỐNG BÌNH MINH 25", qty: 1, price: 125000 },
+        { name: "uPVC ỐNG BÌNH MINH 114 x 2.2mm", qty: 1, price: 305000 },
+        { name: "uPVC ỐNG BÌNH MINH 21 x 1.7mm", qty: 1, price: 42000 },
+        { name: "uPVC ỐNG BÌNH MINH 27 x 1.6mm", qty: 1, price: 52000 },
+        { name: "uPVC ỐNG BÌNH MINH 34 x 1.9mm", qty: 1, price: 75000 },
+        { name: "uPVC ỐNG BÌNH MINH 42 x 1.9mm", qty: 1, price: 97000 },
+        { name: "uPVC ỐNG BÌNH MINH 60 x 1.6mm", qty: 1, price: 135000 },
+        { name: "uPVC ỐNG BÌNH MINH 90 x 1.7mm", qty: 1, price: 175000 },
+        { name: "uPVC ỐNG BÌNH MINH 90 x 2.6mm", qty: 1, price: 280000 },
+        { name: "uPVC ỐNG Tân Hưng 114 x 3.5 dày", qty: 1, price: 120000 },
+        { name: "uPVC ỐNG Tân Hưng 140 x dày 4,5 (ly)", qty: 1, price: 190000 },
+        { name: "uPVC ỐNG Tân Hưng 200x dày 5.5 (ly)", qty: 1, price: 350000 },
+        { name: "uPVC ỐNG Tân Hưng 60 x 3.0", qty: 1, price: 60000 },
+        { name: "uPVC ỐNG Tân Hưng 90 dày 3.5 ly (80)", qty: 1, price: 85000 },
+        { name: "Bịt 20", qty: 1, price: 4000 },
+        { name: "Bịt 25", qty: 1, price: 5000 },
+        { name: "Bít răng ngoài 60", qty: 1, price: 6000 },
+        { name: "Bít răng Trong 60", qty: 1, price: 6000 },
+        { name: "Bồn 300l Nằm Deko", qty: 1, price: 1150000 },
+        { name: "bồn 500l inox nằm", qty: 1, price: 1700000 },
+        { name: "bồn inox 1000l đứng Deko", qty: 1, price: 2200000 },
+        { name: "bồn inox 1000l đứng tân nguyên", qty: 1, price: 2100000 },
+        { name: "bồn inox 1000l Nằm Deko", qty: 1, price: 2300000 },
+        { name: "bồn inox 1000l nằm Tân Nguyên", qty: 1, price: 2300000 },
+        { name: "bồn inox 500l đứng", qty: 1, price: 1600000 },
+        { name: "cao su non", qty: 1, price: 5000 },
+        { name: "CO 114 MỎNG BÌNH MINH", qty: 1, price: 60000 },
+        { name: "CO 27 GIẢM 21 DÀY BÌNH MINH", qty: 1, price: 6000 },
+        { name: "CO 27 REN TRONG 27 DÀY BÌNH MINH", qty: 1, price: 7000 },
+        { name: "CO 27 REN TRONG THAU 21 DÀY BÌNH MINH", qty: 1, price: 19000 },
+        { name: "Co 27 RN 21 // RT 21", qty: 1, price: 8000 },
+        { name: "Co 27 RN 27 BM", qty: 1, price: 8000 },
+        { name: "Co 27 RN 27 Thau bình minh", qty: 1, price: 38000 },
+        { name: "Co 34 BM", qty: 1, price: 9000 },
+        { name: "CO 34 GIẢM 21 DÀY BÌNH MINH", qty: 1, price: 7000 },
+        { name: "CO 34 GIẢM 27 DÀY BÌNH MINH", qty: 1, price: 8000 },
+        { name: "Co 42 BM", qty: 1, price: 13000 },
+        { name: "CO 42 GIẢM 27 DÀY BÌNH MINH", qty: 1, price: 10000 },
+        { name: "CO 42 GIẢM 34 DÀY BÌNH MINH", qty: 1, price: 11000 },
+        { name: "Co 60 giảm 42 Dày Tiền Phong", qty: 1, price: 20000 },
+        { name: "Co 60 giảm 49 ST", qty: 1, price: 9000 },
+        { name: "CO GIẢM 90/60 MỎNG BÌNH MINH", qty: 1, price: 21000 },
+        { name: "CO 114 BÌNH MINH  MỎNG", qty: 1, price: 55000 },
+        { name: "co 21 BÌNH MINH DÀY", qty: 1, price: 5000 },
+        { name: "CO 27 BÌNH MINH  DÀY", qty: 1, price: 7000 },
+        { name: "CO  34 BÌNH MINH DÀY", qty: 1, price: 9000 },
+        { name: "CO  42 BÌNH MINH DÀY", qty: 1, price: 11000 },
+        { name: "CO  60 BÌNH MINH   MỎNG", qty: 1, price: 20000 },
+        { name: "CO 90 BÌNH MINH MỎNG", qty: 1, price: 32000 },
+        { name: "Co Lơi 49", qty: 1, price: 6000 },
+        { name: "chân đứng minh long", qty: 1, price: 210000 },
+        { name: "chân treo minh long", qty: 1, price: 210000 },
+        { name: "chậu rửa chén 2H 1 C Thường", qty: 1, price: 700000 },
+        { name: "Dây Duplex Nhôm 35", qty: 1, price: 14000 },
+        { name: "lavabo minh long", qty: 1, price: 210000 },
+        { name: "Loi loc nước AQua 1 2 3", qty: 1, price: 120000 },
+        { name: "Lơi 114 ST", qty: 1, price: 26000 },
+        { name: "LƠI BÌNH MINH 114 MỎNG", qty: 1, price: 48000 },
+        { name: "LƠI BÌNH MINH 21 DÀY", qty: 1, price: 5000 },
+        { name: "LƠI BÌNH MINH 27 DÀY", qty: 1, price: 6000 },
+        { name: "LƠI BÌNH MINH 34 DÀY", qty: 1, price: 8000 },
+        { name: "LƠI BÍNH MINH 42 DÀY", qty: 1, price: 9500 },
+        { name: "LƠI BÌNH MINH 60 MỎNG", qty: 1, price: 13000 },
+        { name: "LƠI BÌNH MINH 90 MỎNG", qty: 1, price: 27000 },
+        { name: "Lu Nhựa Xanh 220 Lít", qty: 1, price: 380000 },
+        { name: "luppe 34", qty: 1, price: 25000 },
+        { name: "Né 25 BM", qty: 1, price: 20000 },
+        { name: "noi 27 RT 27 Nhựa bm", qty: 1, price: 6000 },
+        { name: "noi giam 114/60", qty: 1, price: 21000 },
+        { name: "Nối 114 ST", qty: 1, price: 23000 },
+        { name: "Nối 140 ST", qty: 1, price: 35000 },
+        { name: "Nối 21 RN 27 Thau", qty: 1, price: 10000 },
+        { name: "Nối 21 RT 27 Thau", qty: 1, price: 10000 },
+        { name: "Nối 25 RT 25 Bình Minh", qty: 1, price: 42000 },
+        { name: "Nối 27 Bình Minh", qty: 1, price: 5000 },
+        { name: "nối 27 rn 21 bm nhựa", qty: 1, price: 5000 },
+        { name: "Nối 27 RN Thau 21 bình minh", qty: 1, price: 18000 },
+        { name: "Nối 27 RT 21 Thau BM", qty: 1, price: 12000 },
+        { name: "Nối 27 RT 27 Thau BM", qty: 1, price: 21000 },
+        { name: "nối 27 rt nhựa 21 bm", qty: 1, price: 5000 },
+        { name: "Nối 34 RN 49", qty: 1, price: 9000 },
+        { name: "Nối 42 ST", qty: 1, price: 6000 },
+        { name: "Nối 60 RT 60 BM", qty: 1, price: 20000 },
+        { name: "Nối 90/34/42 BM", qty: 1, price: 17000 },
+        { name: "NỐI BÌNH MINH 114 MỎNG", qty: 1, price: 27000 },
+        { name: "NỐI BÌNH MINH 21", qty: 1, price: 4000 },
+        { name: "NỐI BÌNH MINH 27", qty: 1, price: 5000 },
+        { name: "NỐI BÌNH MINH 34", qty: 1, price: 7000 },
+        { name: "NỐI BÌNH MINH 42", qty: 1, price: 7000 },
+        { name: "NỐI BÌNH MINH 60 MỎNG", qty: 1, price: 10000 },
+        { name: "NỐI BÌNH MINH 90 MỎNG", qty: 1, price: 19000 },
+        { name: "NỐI GIẢM 114/90 MỎNG BÌNH MINH", qty: 1, price: 29000 },
+        { name: "NỐI GIẢM 27/21 BÌNH MINH DÀY", qty: 1, price: 6000 },
+        { name: "NỐI GIẢM 34/27 BÌNH MINH DÀY", qty: 1, price: 7000 },
+        { name: "NỐI GIẢM 42/27 BÌNH MINH DÀY", qty: 1, price: 8000 },
+        { name: "NỐI GIẢM 42/34 BÌNH MINH DÀY -", qty: 1, price: 9000 },
+        { name: "NỐI GIẢM 60/21 BÌNH MINH DÀY", qty: 1, price: 14000 },
+        { name: "NỐI GIẢM 60/27 BÌNH MINH DÀY", qty: 1, price: 13000 },
+        { name: "NỐI GIẢM 60/34 BÌNH MINH DÀY", qty: 1, price: 14000 },
+        { name: "nối giảm 60/42 Siêu Thành", qty: 1, price: 8000 },
+        { name: "nối Giảm 60/42 bình minh", qty: 1, price: 13000 },
+        { name: "nối giảm 90/42 bình minh", qty: 1, price: 17000 },
+        { name: "NỐI GIẢM 90/60 BÌNH MINH MỎNG", qty: 1, price: 16000 },
+        { name: "NỐI REN NGOÀI BÌNH MINH 21", qty: 1, price: 4000 },
+        { name: "NỐI REN NGOÀI BÌNH MINH 27", qty: 1, price: 5000 },
+        { name: "NỐI REN NGOÀI BÌNH MINH 34", qty: 1, price: 7000 },
+        { name: "NỐI REN ngoài BÌNH MINH 42", qty: 1, price: 9000 },
+        { name: "NỐI REN TRONG BÌNH MINH 21", qty: 1, price: 4000 },
+        { name: "NỐI REN TRONG BÌNH MINH 27", qty: 1, price: 5000 },
+        { name: "NỐI REN TRONG BÌNH MINH 34", qty: 1, price: 7000 },
+        { name: "NỐI REN TRONG BÌNH MINH 42", qty: 1, price: 9000 },
+        { name: "NỐI REN TRONG BÌNH MINH 60", qty: 1, price: 18500 },
+        { name: "phao thong minh", qty: 1, price: 80000 },
+        { name: "ST - BÍT REN NGOÀI 21", qty: 1, price: 2000 },
+        { name: "ST - BÍT REN TRONG 21", qty: 1, price: 2000 },
+        { name: "ST - BÍT TRÒN 114", qty: 1, price: 14000 },
+        { name: "ST - BÍT TRÒN 140", qty: 1, price: 22000 },
+        { name: "ST - BÍT TRÒN 21", qty: 1, price: 2000 },
+        { name: "ST - BÍT TRÒN 27", qty: 1, price: 2000 },
+        { name: "ST - BÍT TRÒN 34", qty: 1, price: 3000 },
+        { name: "ST - BÍT TRÒN 42", qty: 1, price: 3000 },
+        { name: "ST - BÍT TRÒN 49", qty: 1, price: 4000 },
+        { name: "ST - BÍT TRÒN 60", qty: 1, price: 5000 },
+        { name: "ST - BÍT TRÒN 90", qty: 1, price: 8000 },
+        { name: "ST - CO 114", qty: 1, price: 30000 },
+        { name: "ST - CO 21", qty: 1, price: 4000 },
+        { name: "ST - CO 27", qty: 1, price: 5000 },
+        { name: "ST - CO 34", qty: 1, price: 6000 },
+        { name: "ST - CO 60 -", qty: 1, price: 9000 },
+        { name: "ST - CO 90", qty: 1, price: 18000 },
+        { name: "co 114 ST", qty: 1, price: 30000 },
+        { name: "ST - CO REN NGOÀI 21/27", qty: 1, price: 6000 },
+        { name: "ST - CO REN NGOÀI 21/34", qty: 1, price: 8000 },
+        { name: "ST - CO REN TRONG 21/34", qty: 1, price: 8000 },
+        { name: "ST - LƠI 21", qty: 1, price: 3000 },
+        { name: "ST - LƠI 27", qty: 1, price: 3000 },
+        { name: "ST - LƠI 60", qty: 1, price: 8000 },
+        { name: "ST - LƠI 90", qty: 1, price: 14000 },
+        { name: "ST - NỐI 21", qty: 1, price: 3000 },
+        { name: "ST - NỐI 27", qty: 1, price: 3000 },
+        { name: "ST - NỐI 27 REN NGOÀI 34 -", qty: 1, price: 5000 },
+        { name: "ST - NỐI 34", qty: 1, price: 4000 },
+        { name: "ST - NỐI 34 REN NGOÀI 27", qty: 1, price: 4000 },
+        { name: "ST - NỐI 60", qty: 1, price: 7000 },
+        { name: "ST - NỐI 90", qty: 1, price: 14000 },
+        { name: "ST - NỐI REN NGOÀI 34/21", qty: 1, price: 8000 },
+        { name: "ST - NỐI 42 REN NGOÀI 27", qty: 1, price: 7000 },
+        { name: "ST - NỐI REN NGOÀI 42/34", qty: 1, price: 7000 },
+        { name: "ST - NỐI 49 REN NGOÀI 27", qty: 1, price: 8000 },
+        { name: "ST - NỐI 49 REN NGOÀI 34", qty: 1, price: 8000 },
+        { name: "ST - NỐI REN NGOÀI 49/42", qty: 1, price: 7000 },
+        { name: "ST - NỐI REN NGOÀI 60", qty: 1, price: 12000 },
+        { name: "ST - NỐI REN NGOÀI 90", qty: 1, price: 25000 },
+        { name: "ST - NỐI REN TRONG 60", qty: 1, price: 12000 },
+        { name: "ST - NỐI REN TRONG 90", qty: 1, price: 28000 },
+        { name: "ST - TÊ 21", qty: 1, price: 4000 },
+        { name: "ST - TÊ 27", qty: 1, price: 5000 },
+        { name: "ST - TÊ 34", qty: 1, price: 7000 },
+        { name: "ST - TÊ 60", qty: 1, price: 12000 },
+        { name: "ST - TÊ 90", qty: 1, price: 23000 },
+        { name: "ST - TÊ GIẢM 114/60", qty: 1, price: 35000 },
+        { name: "ST - TÊ GIẢM 114/90", qty: 1, price: 36000 },
+        { name: "ST - TÊ GIẢM 34/27", qty: 1, price: 7000 },
+        { name: "ST - TÊ GIẢM 90/34", qty: 1, price: 19000 },
+        { name: "ST - TÊ GIẢM 90/42", qty: 1, price: 19000 },
+        { name: "VAN 21 BÌNH MINH", qty: 1, price: 24000 },
+        { name: "van 27 binh minh", qty: 1, price: 28000 },
+        { name: "VAN 34 BÌNH MINH", qty: 1, price: 42000 },
+        { name: "VAN TAIJAN 42 CON NGỰA ĐL ĐỎ", qty: 1, price: 50000 },
+        { name: "VAN TAIJAN CON NGỰA 49 ĐỎ", qty: 1, price: 65000 },
+        { name: "Xe rùa cam", qty: 1, price: 480000 },
+        { name: "Y 114 ST", qty: 1, price: 50000 },
+        { name: "Y 34 BM", qty: 1, price: 15000 },
+        { name: "Y 90 bình minh M", qty: 1, price: 62000 },
+        { name: "Y 90 ST", qty: 1, price: 33000 }
+    ];
+
+    // ======= STATE =======
+    let productList = JSON.parse(localStorage.getItem(STORAGE_KEY)) || initialData;
+    let filteredList = [...productList];
+    const ITEMS_PER_PAGE = 20;
+    let currentPage = 1;
+
+    let customerList = JSON.parse(localStorage.getItem(CUST_KEY)) || [];
+    let filteredCustomers = [...customerList];
+
+    let invoiceItems = [];
+    let selectedCustomer = null;
+    let invoiceList = JSON.parse(localStorage.getItem(INVOICE_KEY)) || [];
+    let currentPreviewInvoice = null;
+
+    // ======= TAB SWITCHING =======
+    function switchTab(tabId) {
+        ['tab-products','tab-customers','tab-invoice','tab-invoicelist'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById('btn-' + id).classList.remove('active');
+        });
+        document.getElementById(tabId).classList.remove('hidden');
+        document.getElementById('btn-' + tabId).classList.add('active');
+        if (tabId === 'tab-invoicelist') renderInvoiceList();
+        if (tabId === 'tab-customers') renderCustomers();
+    }
+
+    // ======= PRODUCTS =======
+    const tableBody = document.getElementById('productTable');
+    const pagination = document.getElementById('pagination');
+    const countDisplay = document.getElementById('countDisplay');
+    const searchInput = document.getElementById('searchInput');
+
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(productList)); }
+
+    function updateInputTotal() {
+        const q = parseInt(document.getElementById('inputQty').value) || 0;
+        const p = parseInt(document.getElementById('inputPrice').value) || 0;
+        document.getElementById('totalDisplay').value = (q * p).toLocaleString('vi-VN');
+    }
+    document.getElementById('inputQty').oninput = updateInputTotal;
+    document.getElementById('inputPrice').oninput = updateInputTotal;
+
+    document.getElementById('btnAdd').onclick = () => {
+        const name = document.getElementById('inputName').value.trim();
+        const qty = parseInt(document.getElementById('inputQty').value) || 0;
+        const price = parseInt(document.getElementById('inputPrice').value) || 0;
+        if (!name) return;
+        productList.unshift({ name, qty, price });
+        saveData();
+        document.getElementById('inputName').value = '';
+        document.getElementById('inputPrice').value = '';
+        document.getElementById('inputQty').value = 1;
+        updateInputTotal();
+        filterAndRender();
+    };
+
+    function filterAndRender() {
+        const query = searchInput.value.toLowerCase().trim();
+        filteredList = productList.filter(p => p.name.toLowerCase().includes(query));
+        currentPage = 1;
+        renderTable();
+    }
+
+    function renderTable() {
+        tableBody.innerHTML = '';
+        const totalPages = Math.ceil(filteredList.length / ITEMS_PER_PAGE);
+        if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        filteredList.slice(start, end).forEach((item, index) => {
+            const globalIndex = start + index;
+            const row = document.createElement('tr');
+            row.className = "hover:bg-blue-50 transition-colors border-b border-gray-100";
+            row.innerHTML = `
+                <td class="px-6 py-4 text-center text-xs text-gray-400 font-mono">${globalIndex + 1}</td>
+                <td class="px-6 py-4 text-sm font-medium text-gray-800">${item.name}</td>
+                <td class="px-6 py-4 text-sm text-center font-bold">${item.qty}</td>
+                <td class="px-6 py-4 text-sm text-right text-gray-600">${item.price.toLocaleString()}</td>
+                <td class="px-6 py-4 text-sm text-right font-bold text-indigo-700">${(item.qty * item.price).toLocaleString()}</td>
+                <td class="px-6 py-4">
+                    <div class="flex justify-center gap-2">
+                        <button onclick="openEdit(${globalIndex})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fas fa-pencil-alt text-xs"></i></button>
+                        <button onclick="deleteProduct(${globalIndex})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"><i class="fas fa-trash-alt text-xs"></i></button>
+                    </div>
+                </td>`;
+            tableBody.appendChild(row);
+        });
+        countDisplay.innerText = filteredList.length;
+        renderPagination(totalPages);
+        document.getElementById('noResult').classList.toggle('hidden', filteredList.length > 0);
+    }
+
+    function renderPagination(totalPages) {
+        pagination.innerHTML = '';
+        if (totalPages <= 1) return;
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages > 10 && (i > 3 && i < totalPages - 2 && Math.abs(i - currentPage) > 1)) {
+                if (i === 4 || i === totalPages - 3) { const dot = document.createElement('span'); dot.innerText = '...'; pagination.appendChild(dot); }
+                continue;
+            }
+            const btn = document.createElement('button');
+            btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+            btn.innerText = i;
+            btn.onclick = () => { currentPage = i; renderTable(); window.scrollTo(0, 400); };
+            pagination.appendChild(btn);
+        }
+    }
+
+    function openEdit(index) {
+        const item = filteredList[index];
+        const originalIndex = productList.findIndex(p => p === item);
+        document.getElementById('editIndex').value = originalIndex;
+        document.getElementById('editName').value = item.name;
+        document.getElementById('editQty').value = item.qty;
+        document.getElementById('editPrice').value = item.price;
+        document.getElementById('editModal').classList.remove('hidden');
+    }
+    function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
+    function saveEdit() {
+        const idx = document.getElementById('editIndex').value;
+        productList[idx] = {
+            name: document.getElementById('editName').value,
+            qty: parseInt(document.getElementById('editQty').value) || 0,
+            price: parseInt(document.getElementById('editPrice').value) || 0
+        };
+        saveData(); closeEditModal(); filterAndRender();
+    }
+    function deleteProduct(index) {
+        const item = filteredList[index];
+        if (confirm(`Xóa sản phẩm "${item.name}"?`)) {
+            productList = productList.filter(p => p !== item);
+            saveData(); filterAndRender();
+        }
+    }
+    function clearAllData() {
+        if (confirm("CẢNH BÁO: Xóa toàn bộ " + productList.length + " sản phẩm trong danh sách?\nHành động này không thể hoàn tác!")) {
+            productList = [];
+            saveData(); filterAndRender();
+        }
+    }
+    function exportCSV() {
+        let csv = "data:text/csv;charset=utf-8,STT,Ten Hang,So Luong,Don Gia,Thanh Tien\n";
+        productList.forEach((item, i) => { csv += `${i+1},"${item.name}",${item.qty},${item.price},${item.qty*item.price}\n`; });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csv));
+        link.setAttribute("download", `Vat_Tu_Nganh_Nuoc_${new Date().toLocaleDateString()}.csv`);
+        document.body.appendChild(link); link.click();
+    }
+    function handleImportCSV(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const rows = e.target.result.split('\n').slice(1);
+            const imported = rows.map(row => {
+                const cols = row.split(',');
+                if (cols.length < 4) return null;
+                return { name: cols[1]?.replace(/"/g, ''), qty: parseInt(cols[2])||0, price: parseInt(cols[3])||0 };
+            }).filter(x => x && x.name);
+            if (imported.length > 0) { productList = [...imported, ...productList]; saveData(); filterAndRender(); alert(`Đã nhập ${imported.length} mục.`); }
+        };
+        reader.readAsText(file);
+    }
+    function exportProductPDF() {
+        const rowsHTML = productList.map((item,i) => `
+            <tr style="background:${i%2===0?'#fff':'#f8f9ff'}">
+                <td style="border:1px solid #ddd;padding:4px 7px;text-align:center">${i+1}</td>
+                <td style="border:1px solid #ddd;padding:4px 7px">${item.name}</td>
+                <td style="border:1px solid #ddd;padding:4px 7px;text-align:center">${item.qty}</td>
+                <td style="border:1px solid #ddd;padding:4px 7px;text-align:right">${item.price.toLocaleString('vi-VN')}</td>
+                <td style="border:1px solid #ddd;padding:4px 7px;text-align:right;font-weight:bold;color:#4338ca">${(item.qty*item.price).toLocaleString('vi-VN')}</td>
+            </tr>`).join('');
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html><head>
+            <meta charset="UTF-8"><title>Danh Sách Vật Tư</title>
+            <style>
+                @media print { .no-print{display:none} }
+                body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
+                h2 { color: #3730a3; margin-bottom: 4px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 11px; }
+                thead { background: #4f46e5; color: white; }
+                th { padding: 6px 8px; text-align: left; }
+            </style>
+        </head><body>
+            <h2>DANH SÁCH VẬT TƯ NGÀNH NƯỚC — THIỆN TÍN</h2>
+            <p style="color:#666">Ngày: ${new Date().toLocaleDateString('vi-VN')} — Tổng: ${productList.length} sản phẩm</p>
+            <table>
+                <thead><tr><th style="width:36px;text-align:center">STT</th><th>Tên Hàng</th><th style="width:40px;text-align:center">SL</th><th style="width:110px;text-align:right">Đơn Giá</th><th style="width:120px;text-align:right">Thành Tiền</th></tr></thead>
+                <tbody>${rowsHTML}</tbody>
+            </table>
+            <div class="no-print" style="margin-top:16px;text-align:center">
+                <button onclick="window.print()" style="background:#4f46e5;color:white;border:none;padding:9px 24px;border-radius:8px;cursor:pointer">🖨 In / Lưu PDF</button>
+                <button onclick="window.close()" style="margin-left:10px;background:#e5e7eb;border:none;padding:9px 24px;border-radius:8px;cursor:pointer">Đóng</button>
+            </div>
+        </body></html>`);
+        win.document.close(); win.focus();
+    }
+
+    // ======= CUSTOMERS =======
+    function saveCustomers() { localStorage.setItem(CUST_KEY, JSON.stringify(customerList)); }
+
+    document.getElementById('btnAddCust').onclick = () => {
+        const name = document.getElementById('custName').value.trim();
+        const phone = document.getElementById('custPhone').value.trim();
+        const address = document.getElementById('custAddress').value.trim();
+        if (!name) { alert('Vui lòng nhập tên khách hàng!'); return; }
+        customerList.unshift({ id: Date.now(), name, phone, address });
+        saveCustomers();
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('custAddress').value = '';
+        filterCustomers();
+    };
+
+    function filterCustomers() {
+        const q = document.getElementById('searchCust').value.toLowerCase();
+        filteredCustomers = customerList.filter(c => c.name.toLowerCase().includes(q) || (c.phone||'').includes(q));
+        renderCustomers();
+    }
+
+    function renderCustomers() {
+        const tbody = document.getElementById('customerTable');
+        tbody.innerHTML = '';
+        document.getElementById('custCount').innerText = customerList.length;
+        const list = filteredCustomers.length ? filteredCustomers : (document.getElementById('searchCust').value ? [] : customerList);
+        if (list.length === 0) { document.getElementById('noCustResult').classList.remove('hidden'); return; }
+        document.getElementById('noCustResult').classList.add('hidden');
+        list.forEach((c, i) => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-green-50 transition-colors';
+            row.innerHTML = `
+                <td class="px-6 py-4 text-center text-xs text-gray-400">${i+1}</td>
+                <td class="px-6 py-4 font-medium text-gray-800">${c.name}</td>
+                <td class="px-6 py-4 text-gray-600">${c.phone||'—'}</td>
+                <td class="px-6 py-4 text-gray-600 text-sm">${c.address||'—'}</td>
+                <td class="px-6 py-4">
+                    <div class="flex justify-center gap-2">
+                        <button onclick="openEditCust(${customerList.indexOf(c)})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fas fa-pencil-alt text-xs"></i></button>
+                        <button onclick="deleteCust(${customerList.indexOf(c)})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"><i class="fas fa-trash-alt text-xs"></i></button>
+                    </div>
+                </td>`;
+            tbody.appendChild(row);
+        });
+    }
+
+    function openEditCust(index) {
+        const c = customerList[index];
+        document.getElementById('editCustIndex').value = index;
+        document.getElementById('editCustName').value = c.name;
+        document.getElementById('editCustPhone').value = c.phone||'';
+        document.getElementById('editCustAddress').value = c.address||'';
+        document.getElementById('editCustModal').classList.remove('hidden');
+    }
+    function closeEditCustModal() { document.getElementById('editCustModal').classList.add('hidden'); }
+    function saveEditCust() {
+        const idx = document.getElementById('editCustIndex').value;
+        customerList[idx] = {
+            ...customerList[idx],
+            name: document.getElementById('editCustName').value,
+            phone: document.getElementById('editCustPhone').value,
+            address: document.getElementById('editCustAddress').value
+        };
+        saveCustomers(); closeEditCustModal(); renderCustomers();
+    }
+    function deleteCust(index) {
+        if (confirm(`Xóa khách hàng "${customerList[index].name}"?`)) {
+            customerList.splice(index, 1); saveCustomers(); filterCustomers();
+        }
+    }
+
+    // ======= INVOICE =======
+    function searchCustomerForInvoice() {
+        const q = document.getElementById('invCustSearch').value.toLowerCase().trim();
+        const dropdown = document.getElementById('custDropdown');
+        if (!q) { dropdown.classList.add('hidden'); return; }
+        const results = customerList.filter(c => c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)).slice(0, 8);
+        if (results.length === 0) { dropdown.classList.add('hidden'); return; }
+        dropdown.innerHTML = results.map((c,i) => `<div class="dropdown-item" onclick="selectCustomer(${customerList.indexOf(c)})"><strong>${c.name}</strong> · ${c.phone||''} <span class="text-gray-400 text-xs">${c.address||''}</span></div>`).join('');
+        dropdown.classList.remove('hidden');
+    }
+    function selectCustomer(index) {
+        selectedCustomer = customerList[index];
+        document.getElementById('invCustSearch').value = selectedCustomer.name;
+        document.getElementById('custDropdown').classList.add('hidden');
+        document.getElementById('selCustName').innerText = selectedCustomer.name;
+        document.getElementById('selCustPhone').innerText = selectedCustomer.phone || '';
+        document.getElementById('selCustAddr').innerText = selectedCustomer.address || '';
+        document.getElementById('selectedCustInfo').classList.remove('hidden');
+    }
+    function clearSelectedCust() {
+        selectedCustomer = null;
+        document.getElementById('invCustSearch').value = '';
+        document.getElementById('selectedCustInfo').classList.add('hidden');
+    }
+
+    function searchProductForInvoice() {
+        const q = document.getElementById('invProductSearch').value.toLowerCase().trim();
+        const dropdown = document.getElementById('productDropdown');
+        if (!q) { dropdown.classList.add('hidden'); return; }
+        const results = productList.filter(p => p.name.toLowerCase().includes(q));
+        if (results.length === 0) {
+            dropdown.innerHTML = '<div class="dropdown-item text-gray-400 italic">Không tìm thấy sản phẩm phù hợp</div>';
+            dropdown.classList.remove('hidden');
+            return;
+        }
+        dropdown.innerHTML = results.map(p => `<div class="dropdown-item" onclick="selectProductForInvoice('${p.name.replace(/'/g,"\\'")}', ${p.price})">${p.name} <span class="text-indigo-500 font-bold">${p.price.toLocaleString()}đ</span></div>`).join('');
+        dropdown.classList.remove('hidden');
+    }
+    function selectProductForInvoice(name, price) {
+        document.getElementById('invProductSearch').value = name;
+        document.getElementById('invPrice').value = price;
+        document.getElementById('productDropdown').classList.add('hidden');
+    }
+
+    function addItemToInvoice() {
+        const name = document.getElementById('invProductSearch').value.trim();
+        const qty = parseInt(document.getElementById('invQty').value) || 1;
+        const price = parseInt(document.getElementById('invPrice').value) || 0;
+        if (!name) { alert('Vui lòng nhập tên sản phẩm!'); return; }
+        invoiceItems.push({ name, qty, price });
+        document.getElementById('invProductSearch').value = '';
+        document.getElementById('invQty').value = 1;
+        document.getElementById('invPrice').value = '';
+        document.getElementById('productDropdown').classList.add('hidden');
+        renderInvoiceItems();
+    }
+
+    function renderInvoiceItems() {
+        const tbody = document.getElementById('invoiceItemsTable');
+        tbody.innerHTML = '';
+        let total = 0;
+        invoiceItems.forEach((item, i) => {
+            const tt = item.qty * item.price;
+            total += tt;
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-indigo-50 transition-colors';
+            row.innerHTML = `
+                <td class="px-6 py-3 text-center text-xs text-gray-400">${i+1}</td>
+                <td class="px-6 py-3 text-sm font-medium text-gray-800">${item.name}</td>
+                <td class="px-6 py-3 text-sm text-center font-bold">${item.qty}</td>
+                <td class="px-6 py-3 text-sm text-right text-gray-600">${item.price.toLocaleString()}</td>
+                <td class="px-6 py-3 text-sm text-right font-bold text-indigo-700">${tt.toLocaleString()}</td>
+                <td class="px-6 py-3 text-center no-print">
+                    <div class="flex justify-center gap-2">
+                        <button onclick="openEditInvoiceItem(${i})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all" title="Sửa"><i class="fas fa-pencil-alt text-xs"></i></button>
+                        <button onclick="removeInvoiceItem(${i})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Xoá"><i class="fas fa-trash-alt text-xs"></i></button>
+                    </div>
+                </td>`;
+            tbody.appendChild(row);
+        });
+        document.getElementById('invoiceTotal').innerText = total.toLocaleString('vi-VN') + ' đ';
+        document.getElementById('noInvoiceItems').style.display = invoiceItems.length ? 'none' : 'block';
+    }
+
+    function removeInvoiceItem(index) {
+        invoiceItems.splice(index, 1);
+        renderInvoiceItems();
+    }
+
+    function clearInvoice() {
+        if (confirm('Xoá toàn bộ hoá đơn hiện tại?')) {
+            invoiceItems = [];
+            clearSelectedCust();
+            document.getElementById('invNote').value = '';
+            renderInvoiceItems();
+        }
+    }
+
+    function saveInvoice() {
+        if (invoiceItems.length === 0) { alert('Vui lòng thêm ít nhất 1 sản phẩm!'); return; }
+        const total = invoiceItems.reduce((s, i) => s + i.qty * i.price, 0);
+        const invoice = {
+            id: Date.now(),
+            soHD: invoiceList.length + 1,
+            customer: selectedCustomer ? { ...selectedCustomer } : { name: document.getElementById('invCustSearch').value || 'Khách lẻ', phone: '', address: '' },
+            date: document.getElementById('invDate').value || new Date().toISOString().slice(0,10),
+            note: document.getElementById('invNote').value,
+            items: [...invoiceItems],
+            total
+        };
+        invoiceList.unshift(invoice);
+        localStorage.setItem(INVOICE_KEY, JSON.stringify(invoiceList));
+        alert(`✅ Đã lưu hoá đơn #${invoice.soHD} - ${invoice.customer.name} - ${total.toLocaleString()}đ`);
+        invoiceItems = [];
+        clearSelectedCust();
+        document.getElementById('invNote').value = '';
+        renderInvoiceItems();
+    }
+
+    function exportInvoicePDF() {
+        if (invoiceItems.length === 0) { alert('Chưa có sản phẩm trong hoá đơn!'); return; }
+        const total = invoiceItems.reduce((s, i) => s + i.qty * i.price, 0);
+        const cust = selectedCustomer || { name: document.getElementById('invCustSearch').value || 'Khách lẻ', phone: '', address: '' };
+        const date = document.getElementById('invDate').value || new Date().toISOString().slice(0,10);
+        generateInvoicePDF({ customer: cust, date, note: document.getElementById('invNote').value, items: invoiceItems, total, soHD: '—' });
+    }
+
+    function generateInvoicePDF(inv) {
+        const itemsHTML = inv.items.map((item, i) => `
+            <tr style="background:${i%2===0?'#fff':'#f8f9ff'}">
+                <td style="border:1px solid #ddd;padding:5px 8px;text-align:center">${i+1}</td>
+                <td style="border:1px solid #ddd;padding:5px 8px">${item.name}</td>
+                <td style="border:1px solid #ddd;padding:5px 8px;text-align:center">${item.qty}</td>
+                <td style="border:1px solid #ddd;padding:5px 8px;text-align:right">${item.price.toLocaleString('vi-VN')}</td>
+                <td style="border:1px solid #ddd;padding:5px 8px;text-align:right;font-weight:bold;color:#4338ca">${(item.qty*item.price).toLocaleString('vi-VN')}</td>
+            </tr>`).join('');
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html><head>
+            <meta charset="UTF-8">
+            <title>Hoá Đơn #${inv.soHD}</title>
+            <style>
+                @media print { body{margin:0} .no-print{display:none} }
+                body { font-family: Arial, sans-serif; padding: 28px; max-width: 740px; margin: auto; font-size: 13px; }
+                .header { text-align: center; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; margin-bottom: 14px; }
+                .header h1 { margin: 0; font-size: 18px; color: #3730a3; text-transform: uppercase; }
+                .header p { margin: 2px 0; color: #555; font-size: 12px; }
+                .header .title { font-size: 14px; font-weight: bold; margin-top: 6px; color: #1e1b4b; }
+                .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 14px; font-size: 12px; }
+                .info-grid span { color: #666; }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                thead { background: #4f46e5; color: white; }
+                th { padding: 7px 10px; text-align: left; }
+                th:nth-child(3) { text-align: center; }
+                th:nth-child(4), th:nth-child(5) { text-align: right; }
+                tfoot td { background: #eef2ff; font-weight: bold; color: #4338ca; padding: 7px 10px; border: 1px solid #ddd; }
+                .footer { text-align: center; color: #888; font-size: 11px; margin-top: 18px; font-style: italic; }
+            </style>
+        </head><body>
+            <div class="header">
+                <h1>Cửa Hàng Điện Nước Thiện Tín</h1>
+                <p>224B Hàm Nghi, Bảo Lâm 1, Lâm Đồng</p>
+                <p>SĐT: 0812 001 211  -  0966 908 685</p>
+                <div class="title">HOÁ ĐƠN BÁN HÀNG</div>
+            </div>
+            <div class="info-grid">
+                <div><span>Số HĐ:</span> <strong>#${inv.soHD}</strong></div>
+                <div><span>Ngày:</span> <strong>${inv.date}</strong></div>
+                <div><span>Khách hàng:</span> <strong>${inv.customer.name}</strong></div>
+                <div><span>SĐT:</span> ${inv.customer.phone||'—'}</div>
+                ${inv.customer.address ? `<div style="grid-column:1/-1"><span>Địa chỉ:</span> ${inv.customer.address}</div>` : ''}
+                ${inv.note ? `<div style="grid-column:1/-1"><span>Ghi chú:</span> ${inv.note}</div>` : ''}
+            </div>
+            <table>
+                <thead><tr>
+                    <th style="width:36px;text-align:center">STT</th>
+                    <th>Tên Hàng</th>
+                    <th style="width:40px;text-align:center">SL</th>
+                    <th style="width:110px;text-align:right">Đơn Giá</th>
+                    <th style="width:120px;text-align:right">Thành Tiền</th>
+                </tr></thead>
+                <tbody>${itemsHTML}</tbody>
+                <tfoot><tr>
+                    <td colspan="4" style="text-align:right">TỔNG CỘNG</td>
+                    <td style="text-align:right">${inv.total.toLocaleString('vi-VN')} đ</td>
+                </tr></tfoot>
+            </table>
+            <div class="footer">Cảm ơn quý khách đã mua hàng! — Cửa Hàng Điện Nước Thiện Tín</div>
+            <div class="no-print" style="margin-top:20px;text-align:center">
+                <button onclick="window.print()" style="background:#4f46e5;color:white;border:none;padding:10px 28px;border-radius:8px;font-size:14px;cursor:pointer">🖨 In / Lưu PDF</button>
+                <button onclick="window.close()" style="margin-left:12px;background:#e5e7eb;border:none;padding:10px 28px;border-radius:8px;font-size:14px;cursor:pointer">Đóng</button>
+            </div>
+        </body></html>`);
+        win.document.close();
+        win.focus();
+    }
+
+    // ======= INVOICE LIST =======
+    function renderInvoiceList() {
+        const q = (document.getElementById('searchInvoice').value||'').toLowerCase();
+        const filtered = invoiceList.filter(inv =>
+            inv.customer.name.toLowerCase().includes(q) ||
+            (inv.date||'').includes(q) ||
+            String(inv.soHD).includes(q)
+        );
+        const tbody = document.getElementById('invoiceListTable');
+        tbody.innerHTML = '';
+        document.getElementById('invoiceCount').innerText = invoiceList.length;
+        const noEl = document.getElementById('noInvoiceList');
+        if (filtered.length === 0) { noEl.classList.remove('hidden'); return; }
+        noEl.classList.add('hidden');
+        filtered.forEach(inv => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-indigo-50 transition-colors';
+            row.innerHTML = `
+                <td class="px-6 py-4 text-center font-mono text-sm text-indigo-600 font-bold">#${inv.soHD}</td>
+                <td class="px-6 py-4 font-medium text-gray-800">${inv.customer.name}</td>
+                <td class="px-6 py-4 text-gray-600 text-sm">${inv.customer.phone||'—'}</td>
+                <td class="px-6 py-4 text-gray-600 text-sm">${inv.date}</td>
+                <td class="px-6 py-4 text-right font-bold text-indigo-700">${inv.total.toLocaleString()} đ</td>
+                <td class="px-6 py-4">
+                    <div class="flex justify-center gap-2">
+                        <button onclick="viewInvoice(${invoiceList.indexOf(inv)})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all" title="Xem"><i class="fas fa-eye text-xs"></i></button>
+                        <button onclick="openEditInvoice(${invoiceList.indexOf(inv)})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white transition-all" title="Sửa"><i class="fas fa-pencil-alt text-xs"></i></button>
+                        <button onclick="reexportInvoice(${invoiceList.indexOf(inv)})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Xuất PDF"><i class="fas fa-file-pdf text-xs"></i></button>
+                        <button onclick="deleteInvoice(${invoiceList.indexOf(inv)})" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-500 hover:text-white transition-all" title="Xoá"><i class="fas fa-trash text-xs"></i></button>
+                    </div>
+                </td>`;
+            tbody.appendChild(row);
+        });
+    }
+
+    function viewInvoice(index) {
+        const inv = invoiceList[index];
+        currentPreviewInvoice = inv;
+        const total = inv.total.toLocaleString('vi-VN');
+        document.getElementById('invoicePreview').innerHTML = `
+            <div class="text-center border-b pb-4 mb-4">
+                <h2 class="text-xl font-bold text-indigo-700 uppercase">Cửa Hàng Điện Nước Thiện Tín</h2>
+                <p class="text-gray-500 text-xs mt-1">224B Hàm Nghi, Bảo Lâm 1, Lâm Đồng</p>
+                <p class="text-gray-500 text-xs">SĐT: 0812 001 211  -  0966 908 685</p>
+                <p class="text-gray-500 text-sm mt-1 font-semibold">Hoá Đơn Bán Hàng</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                <div><span class="text-gray-500">Số HĐ:</span> <strong>#${inv.soHD}</strong></div>
+                <div><span class="text-gray-500">Ngày:</span> <strong>${inv.date}</strong></div>
+                <div><span class="text-gray-500">Khách hàng:</span> <strong>${inv.customer.name}</strong></div>
+                <div><span class="text-gray-500">SĐT:</span> ${inv.customer.phone||'—'}</div>
+                ${inv.customer.address ? `<div class="col-span-2"><span class="text-gray-500">Địa chỉ:</span> ${inv.customer.address}</div>` : ''}
+                ${inv.note ? `<div class="col-span-2"><span class="text-gray-500">Ghi chú:</span> ${inv.note}</div>` : ''}
+            </div>
+            <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden mb-4">
+                <thead class="bg-indigo-600 text-white">
+                    <tr><th class="px-3 py-2 text-center">STT</th><th class="px-3 py-2 text-left">Tên Hàng</th><th class="px-3 py-2 text-center">SL</th><th class="px-3 py-2 text-right">Đơn Giá</th><th class="px-3 py-2 text-right">Thành Tiền</th></tr>
+                </thead>
+                <tbody>
+                    ${inv.items.map((item,i) => `<tr class="${i%2===0?'bg-white':'bg-gray-50'}"><td class="px-3 py-2 text-center text-gray-400">${i+1}</td><td class="px-3 py-2">${item.name}</td><td class="px-3 py-2 text-center">${item.qty}</td><td class="px-3 py-2 text-right">${item.price.toLocaleString()}</td><td class="px-3 py-2 text-right font-bold text-indigo-700">${(item.qty*item.price).toLocaleString()}</td></tr>`).join('')}
+                </tbody>
+                <tfoot><tr class="bg-indigo-50"><td colspan="4" class="px-3 py-3 text-right font-bold text-gray-700">TỔNG CỘNG</td><td class="px-3 py-3 text-right font-bold text-indigo-700 text-lg">${total} đ</td></tr></tfoot>
+            </table>
+            <p class="text-center text-gray-400 text-xs italic">Cảm ơn quý khách đã mua hàng!</p>
+        `;
+        document.getElementById('viewInvoiceModal').classList.remove('hidden');
+    }
+    function closeViewInvoice() { document.getElementById('viewInvoiceModal').classList.add('hidden'); currentPreviewInvoice = null; }
+    function printInvoicePreview() {
+        const content = document.getElementById('invoicePreview').innerHTML;
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hoa Don</title>
+        <style>body{font-family:Arial,sans-serif;padding:24px;max-width:700px;margin:auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:6px 10px;font-size:12px}thead{background:#4f46e5;color:white}tfoot{background:#eef2ff;font-weight:bold;color:#4f46e5}.text-center{text-align:center}.text-right{text-align:right}h2{color:#4338ca}p{margin:4px 0}</style>
+        </head><body>${content}</body></html>`);
+        win.document.close();
+        win.focus();
+        win.print();
+    }
+    function exportPreviewInvoicePDF() { if (currentPreviewInvoice) generateInvoicePDF(currentPreviewInvoice); }
+    function reexportInvoice(index) { generateInvoicePDF(invoiceList[index]); }
+    function deleteInvoice(index) {
+        if (confirm(`Xoá hoá đơn #${invoiceList[index].soHD}?`)) {
+            invoiceList.splice(index, 1);
+            localStorage.setItem(INVOICE_KEY, JSON.stringify(invoiceList));
+            renderInvoiceList();
+        }
+    }
+
+    // ======= EDIT INVOICE ITEM =======
+    function openEditInvoiceItem(index) {
+        const item = invoiceItems[index];
+        document.getElementById('editInvItemIndex').value = index;
+        document.getElementById('editInvItemName').value = item.name;
+        document.getElementById('editInvItemQty').value = item.qty;
+        document.getElementById('editInvItemPrice').value = item.price;
+        updateEditInvTotal();
+        document.getElementById('editInvoiceItemModal').classList.remove('hidden');
+    }
+    function updateEditInvTotal() {
+        const q = parseInt(document.getElementById('editInvItemQty').value) || 0;
+        const p = parseInt(document.getElementById('editInvItemPrice').value) || 0;
+        document.getElementById('editInvItemTotal').value = (q * p).toLocaleString('vi-VN') + ' đ';
+    }
+    document.getElementById('editInvItemQty').addEventListener('input', updateEditInvTotal);
+    document.getElementById('editInvItemPrice').addEventListener('input', updateEditInvTotal);
+    function closeEditInvoiceItemModal() {
+        document.getElementById('editInvoiceItemModal').classList.add('hidden');
+    }
+    function saveEditInvoiceItem() {
+        const idx = parseInt(document.getElementById('editInvItemIndex').value);
+        invoiceItems[idx] = {
+            name: document.getElementById('editInvItemName').value.trim(),
+            qty: parseInt(document.getElementById('editInvItemQty').value) || 1,
+            price: parseInt(document.getElementById('editInvItemPrice').value) || 0
+        };
+        closeEditInvoiceItemModal();
+        renderInvoiceItems();
+    }
+
+        // ======= CLOSE DROPDOWNS ON CLICK OUTSIDE =======
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#invCustSearch') && !e.target.closest('#custDropdown')) document.getElementById('custDropdown').classList.add('hidden');
+        if (!e.target.closest('#invProductSearch') && !e.target.closest('#productDropdown')) document.getElementById('productDropdown').classList.add('hidden');
+    });
+
+    // ======= CUSTOMER CSV =======
+    function exportCustCSV() {
+        let csv = "data:text/csv;charset=utf-8,STT,Ten Khach Hang,So Dien Thoai,Dia Chi\n";
+        customerList.forEach((c, i) => {
+            csv += `${i+1},"${c.name}","${c.phone||''}","${c.address||''}"\n`;
+        });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csv));
+        link.setAttribute("download", `Khach_Hang_ThienTin_${new Date().toLocaleDateString('vi-VN').replace(/\//g,'-')}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+    function handleImportCustCSV(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const rows = e.target.result.split('\n').slice(1);
+            const imported = rows.map(row => {
+                const cols = row.match(/(".*?"|[^,]+)(?=,|$)/g);
+                if (!cols || cols.length < 2) return null;
+                return {
+                    id: Date.now() + Math.random(),
+                    name: (cols[1]||'').replace(/"/g,'').trim(),
+                    phone: (cols[2]||'').replace(/"/g,'').trim(),
+                    address: (cols[3]||'').replace(/"/g,'').trim()
+                };
+            }).filter(x => x && x.name);
+            if (imported.length > 0) {
+                if (confirm(`Nhập ${imported.length} khách hàng từ CSV?\nChọn OK để gộp vào danh sách hiện có.`)) {
+                    customerList = [...imported, ...customerList];
+                    saveCustomers(); filterCustomers();
+                    alert(`✅ Đã nhập ${imported.length} khách hàng.`);
+                }
+            } else { alert('Không tìm thấy dữ liệu hợp lệ trong file CSV.'); }
+        };
+        reader.readAsText(file, 'utf-8');
+        input.value = '';
+    }
+
+    // ======= INVOICE CSV =======
+    // ======= INVOICE JSON BACKUP (đầy đủ sản phẩm) =======
+    function exportInvJSON() {
+        if (invoiceList.length === 0) { alert('Chưa có hoá đơn nào để xuất!'); return; }
+        const data = JSON.stringify(invoiceList, null, 2);
+        const blob = new Blob([data], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const dateStr = new Date().toLocaleDateString('vi-VN').replace(/\//g,'-');
+        link.setAttribute("href", url);
+        link.setAttribute("download", `HoaDon_ThienTin_Backup_${dateStr}.json`);
+        document.body.appendChild(link); link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    function handleImportInvJSON(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (!Array.isArray(imported) || imported.length === 0) {
+                    alert('File JSON không hợp lệ hoặc không có dữ liệu!'); return;
+                }
+                // Validate structure
+                const valid = imported.filter(inv => inv.customer && inv.customer.name && Array.isArray(inv.items));
+                if (valid.length === 0) { alert('Không tìm thấy hoá đơn hợp lệ trong file!'); return; }
+                const choice = confirm(
+                    `Tìm thấy ${valid.length} hoá đơn trong file backup.\n\n` +
+                    `• OK = GỘP vào danh sách hiện có (${invoiceList.length} hoá đơn)\n` +
+                    `• Cancel = Huỷ`
+                );
+                if (choice) {
+                    invoiceList = [...valid, ...invoiceList];
+                    localStorage.setItem(INVOICE_KEY, JSON.stringify(invoiceList));
+                    renderInvoiceList();
+                    alert(`✅ Đã nhập ${valid.length} hoá đơn (đầy đủ sản phẩm).`);
+                }
+            } catch(err) {
+                alert('Lỗi đọc file JSON: ' + err.message);
+            }
+        };
+        reader.readAsText(file, 'utf-8');
+        input.value = '';
+    }
+
+    // ======= INVOICE CSV (xem tổng quan, không có sản phẩm chi tiết) =======
+    function exportInvCSV() {
+        if (invoiceList.length === 0) { alert('Chưa có hoá đơn nào!'); return; }
+        const BOM = '\uFEFF';
+        let csv = BOM + 'So HD,Khach Hang,So DT,Dia Chi,Ngay,Tong Tien,Ghi Chu,So San Pham,Chi Tiet San Pham\n';
+        invoiceList.forEach(inv => {
+            const itemCount = (inv.items||[]).length;
+            const itemDetail = (inv.items||[]).map(it => `${it.name}(x${it.qty}=${(it.qty*it.price).toLocaleString()}d)`).join(' | ');
+            csv += `${inv.soHD},"${inv.customer.name}","${inv.customer.phone||''}","${inv.customer.address||''}",${inv.date},${inv.total},"${inv.note||''}",${itemCount},"${itemDetail}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `HoaDon_ThienTin_${new Date().toLocaleDateString('vi-VN').replace(/\//g,'-')}.csv`);
+        document.body.appendChild(link); link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    function handleImportInvCSV(input) {
+        alert('⚠️ CSV chỉ lưu thông tin tổng quan, không có chi tiết sản phẩm.\nHãy dùng nút "Nhập JSON" để khôi phục đầy đủ dữ liệu.');
+        input.value = '';
+    }
+
+    // ======= EDIT INVOICE (FULL) =======
+    let editInvItems = [];
+    function openEditInvoice(index) {
+        const inv = invoiceList[index];
+        document.getElementById('editInvIndex').value = index;
+        document.getElementById('editInvCustName').value = inv.customer.name || '';
+        document.getElementById('editInvCustPhone').value = inv.customer.phone || '';
+        document.getElementById('editInvCustAddr').value = inv.customer.address || '';
+        document.getElementById('editInvDate').value = inv.date || '';
+        document.getElementById('editInvNote').value = inv.note || '';
+        editInvItems = inv.items ? JSON.parse(JSON.stringify(inv.items)) : [];
+        renderEditInvItems();
+        document.getElementById('editInvoiceModal').classList.remove('hidden');
+    }
+    function closeEditInvoiceModal() {
+        document.getElementById('editInvoiceModal').classList.add('hidden');
+        editInvItems = [];
+    }
+    function renderEditInvItems() {
+        const tbody = document.getElementById('editInvItemsBody');
+        tbody.innerHTML = '';
+        let total = 0;
+        editInvItems.forEach((item, i) => {
+            const sub = item.qty * item.price;
+            total += sub;
+            tbody.innerHTML += `
+                <tr class="${i%2===0?'bg-white':'bg-gray-50'}">
+                    <td class="px-3 py-2"><input type="text" value="${item.name}" onchange="editInvItems[${i}].name=this.value" class="w-full px-2 py-1 border rounded text-sm outline-none focus:ring-1 focus:ring-yellow-400"></td>
+                    <td class="px-3 py-2"><input type="number" value="${item.qty}" min="1" onchange="editInvItems[${i}].qty=parseInt(this.value)||1;renderEditInvItems()" class="w-full px-2 py-1 border rounded text-sm text-center outline-none focus:ring-1 focus:ring-yellow-400"></td>
+                    <td class="px-3 py-2"><input type="number" value="${item.price}" min="0" onchange="editInvItems[${i}].price=parseInt(this.value)||0;renderEditInvItems()" class="w-full px-2 py-1 border rounded text-sm text-right outline-none focus:ring-1 focus:ring-yellow-400"></td>
+                    <td class="px-3 py-2 text-right font-bold text-indigo-700 text-sm">${sub.toLocaleString('vi-VN')} đ</td>
+                    <td class="px-3 py-2 text-center"><button onclick="editInvItems.splice(${i},1);renderEditInvItems()" class="text-red-400 hover:text-red-600 transition-colors"><i class="fas fa-times"></i></button></td>
+                </tr>`;
+        });
+        document.getElementById('editInvTotal').innerText = total.toLocaleString('vi-VN') + ' đ';
+    }
+    function addItemToEditInvoice() {
+        const name = document.getElementById('editInvNewName').value.trim();
+        const qty = parseInt(document.getElementById('editInvNewQty').value) || 1;
+        const price = parseInt(document.getElementById('editInvNewPrice').value) || 0;
+        if (!name) { alert('Vui lòng nhập tên sản phẩm!'); return; }
+        editInvItems.push({ name, qty, price });
+        renderEditInvItems();
+        document.getElementById('editInvNewName').value = '';
+        document.getElementById('editInvNewQty').value = 1;
+        document.getElementById('editInvNewPrice').value = '';
+    }
+    function saveEditInvoice() {
+        const index = parseInt(document.getElementById('editInvIndex').value);
+        const total = editInvItems.reduce((s, it) => s + it.qty * it.price, 0);
+        invoiceList[index] = {
+            ...invoiceList[index],
+            customer: {
+                name: document.getElementById('editInvCustName').value.trim(),
+                phone: document.getElementById('editInvCustPhone').value.trim(),
+                address: document.getElementById('editInvCustAddr').value.trim()
+            },
+            date: document.getElementById('editInvDate').value,
+            note: document.getElementById('editInvNote').value.trim(),
+            items: JSON.parse(JSON.stringify(editInvItems)),
+            total
+        };
+        localStorage.setItem(INVOICE_KEY, JSON.stringify(invoiceList));
+        closeEditInvoiceModal();
+        renderInvoiceList();
+    }
+
+    // ======= INIT =======
+    document.getElementById('invDate').value = new Date().toISOString().slice(0,10);
+    window.onload = () => { filterAndRender(); renderCustomers(); };
+</script>
+</body>
+</html>
